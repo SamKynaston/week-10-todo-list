@@ -11,4 +11,4 @@ const addDoneToDo = async (req, res) => {}
 const deleteDoneToDo = async (req, res) => {}
 
 
-module.exports = [addActiveToDo, deleteActiveToDo, addDoneToDo, deleteDoneToDo]
+module.exports = {addActiveToDo, deleteActiveToDo, addDoneToDo, deleteDoneToDo}
