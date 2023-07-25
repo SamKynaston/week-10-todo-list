@@ -7,4 +7,4 @@ const Model = database.define("todo", {
     password: {type:DataTypes.STRING, allowNull:false},
 })
 
-module.exports = Model
+module.exports = User

@@ -7,4 +7,4 @@ const Model = database.define("todo", {
     author: {type:DataTypes.INTEGER, allowNull:false}
 })
 
-module.exports = Model
+module.exports = ToDo
