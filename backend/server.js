@@ -21,12 +21,12 @@ const syncTables = () => {
 }
 
 //Routes
-const AuthorRoutes = require("./routes/author.routes")
-const BookRoutes = require("./routes/books.routes")
+const UserRoutes = require("./routes/users")
+const ToDoRoutes = require("./routes/todos")
 
 //Configure Routes
-app.use("/book", BookRoutes)
-app.use("/author", AuthorRoutes)
+app.use("/user", UserRoutes)
+app.use("/author", ToDoRoutes)
 
 //Configure the Port
 const port = process.env.port
