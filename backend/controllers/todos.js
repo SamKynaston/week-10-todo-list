@@ -7,7 +7,7 @@ const ToDo = require("../services/models/todo")
 const addActiveToDo = async (req, res) => {
     try {
         const newActiveToDo = ToDo.create(req.body)
-        return res.status(201).json({message:"success", todo:newActiveToDo})
+        return res.status(201).json({successResponse:{message:"success", todo:newActiveToDo}})
     } catch (err) {
         return res.status(501).json({errorResponse: {message:err.Message, error:err}})
     }
