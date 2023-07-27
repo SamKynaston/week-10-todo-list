@@ -3,6 +3,7 @@ require("dotenv").config()
 //Express
 const express = require("express") 
 const app = express() // API
+const cors = require("cors")
 
 //Models
 const User = require("./services/models/user")
@@ -11,6 +12,7 @@ const ToDo = require("./services/models/todo")
 //Middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cors())
 
 const syncTables = () => {
     User.hasMany(ToDo);
