@@ -6,8 +6,11 @@ const ToDo = require("../services/models/todo")
 
 const addActiveToDo = async (req, res) => {
     try {
+        if (!req["authCheck"]) { return res.status(401).json({message:"user not authorized"}) }
+
         req.body["isActive"] = true
         const newActiveToDo = ToDo.create(req.body)
+        
         return res.status(201).json({successResponse:{message:"success", todo:newActiveToDo}})
     } catch (err) {
         return res.status(501).json({errorResponse: {message:err.Message, error:err}})
@@ -16,6 +19,8 @@ const addActiveToDo = async (req, res) => {
 
 const deleteActiveToDo = async (req, res) => {
     try {
+        if (!req["authCheck"]) { return res.status(401).json({message:"user not authorized"}) }
+
         const todo = await ToDo.findOne({
             where: req.body
         })
@@ -32,6 +37,8 @@ const deleteActiveToDo = async (req, res) => {
 
 const addDoneToDo = async (req, res) => {
     try {
+        if (!req["authCheck"]) { return res.status(401).json({message:"user not authorized"}) }
+
         const newDoneToDo = ToDo.create(req.body)
         return res.status(201).json({successResponse:{message:"success", todo:newDoneToDo}})
     } catch (err) {
@@ -41,6 +48,8 @@ const addDoneToDo = async (req, res) => {
 
 const deleteDoneToDo = async (req, res) => {
     try {
+        if (!req["authCheck"]) { return res.status(401).json({message:"user not authorized"}) }
+
         const todo = await ToDo.findOne({
             where: req.body
         })
