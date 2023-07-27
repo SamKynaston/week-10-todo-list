@@ -19,7 +19,7 @@ const registerUser = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const userLogged = await User.fineOne({
+        const userLogged = await User.findOne({
             where: {
                 username: req.body.username
             }
