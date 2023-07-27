@@ -20,11 +20,11 @@ const authenticatePassword = async(req,res,next) => {
             }
         })
 
-        if (!req.authCheck) {return res.status(401).json({body:"Incorrect User Details"})}
+        if (!req.authCheck) {return res.status(401).json({body:"user not authorized"})}
 
         const password = bcrypt.compare(req.body.password, req.user.password)
         
-        if (!password) {return res.status(401).json({body:"Incorrect User Details"})}
+        if (!password) {return res.status(401).json({body:"user not authorized"})}
         
         next();
     } catch (err) {
@@ -35,14 +35,14 @@ const authenticatePassword = async(req,res,next) => {
 const authenticateToken = async(req,res,next) => {
     try {
         if (!req.header("Authorisation")) {
-            return res.status(401).json({body:"Improper Authorisation Details"})
+            return res.status(401).json({body:"user not authorized"})
         }
         
         const decodedToken = jwt.verify(req.header("Authorisation").replace("Bearer ", ""), process.env.SECRET)
         const user = await User.findOne({where: {id:decodedToken.id}})
         
         if (!user) {
-            return res.status(401).json({body:"Improper Authorisation Details"})
+            return res.status(401).json({body:"user not authorized"})
         }
 
         req["authCheck"] = user.dataValues
