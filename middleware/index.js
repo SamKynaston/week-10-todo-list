@@ -1,64 +1,55 @@
-const User = require("../users/model")
+const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 
-const bcrypt = require("bcrypt")
+const User = require("../services/models/user")
 
-const saltRounds = process.env.SALT_ROUNDS
-
-const hashPass = async (req, res, next) => {
+const hashPass = async(req,res,next) => {
     try {
-        console.log("hashPass middleware")
-        req.body.password = await bcrypt.hash(req.body.password, parseInt(saltRounds))
+        req.body.authorPassword = await bcrypt.hash(req.body.authorPassword, parseInt(process.env.SALT_ROUNDS))
         next()
-    } catch (error) {
-        res.status(501).json({errorMessage: error.message, error:error})
+    } catch (err) {
+        res.status(500).json({body:err.Message})
     }
 }
 
-const checkPass = async (req, res, next) => {
-    try { 
-        const userPass = await User.findOne({
+const authenticatePassword = async(req,res,next) => {
+    try {
+        req.authCheck = await Author.findOne({
             where: {
-                username: req.body.username
+                authorName:req.body.authorName
             }
         })
-        bcrypt.compare(req.body.password, userPass.password).then(console.log(res));
+
+        if (!req.authCheck) {return res.status(401).json({body:"Incorrect User Details"})}
+
+        const password = bcrypt.compare(req.body.authorPassword, req.user.authorPassword)
+        
+        if (!password) {return res.status(401).json({body:"Incorrect User Details"})}
+        
         next();
-    } catch (error) {
-        res.status(501).json({errorMessage: error.message, error: error});
-        console.log(error);
+    } catch (err) {
+        res.status(500).json({body:err.Message})
     }
 }
 
-const tokenCheck = async function(req, res, next) {
-    request.post(
-      `https://${ process.env.SUBDOMAIN }.onelogin.com/oidc/2/token/introspection`,   
-      {
-      'form': {
-        'token': req.session.accessToken,
-        'token_type_hint': 'access_token',
-        'client_id': process.env.MY_SQL_URI,
-        'client_secret': process.env.SECRET
-      }
-    },function(err, response, body){
-      var token = JSON.parse(body);
-      var tokenValid = false;
-  
-      var clientIdValid = token.client_id === process.env.MY_SQL_URI;
-  
-      console.log(token.client_id)
-      console.log(process.env.MY_SQL_URI)
+const authenticateToken = async(req,res,next) => {
+    try {
+        if (!req.header("Authorisation")) {
+            return res.status(401).json({body:"Improper Authorisation Details"})
+        }
+        
+        const decodedToken = jwt.verify(req.header("Authorisation").replace("Bearer ", ""), process.env.SECRET)
+        const user = await User.findOne({where: {id:decodedToken.id}})
+        
+        if (!user) {
+            return res.status(401).json({body:"Improper Authorisation Details"})
+        }
 
-      var currentTimestamp = new Date().getTime() / 1000;
-      var tokenIsNotExpired = token.exp > currentTimestamp;
-  
-      tokenValid = clientIdValid && tokenIsNotExpired
-    });
-  };
-
-console.log("why wont you commit?")
-
-module.exports = {
-    hashPass,
-    checkPass
+        req["authCheck"] = user.dataValues
+        next()
+    } catch (err) {
+        res.status(500).json({body:err.Message})
+    }
 }
+
+module.exports = {hashPass, authenticatePassword, authenticateToken}
