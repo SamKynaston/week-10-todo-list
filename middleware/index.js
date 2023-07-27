@@ -14,15 +14,15 @@ const hashPass = async(req,res,next) => {
 
 const authenticatePassword = async(req,res,next) => {
     try {
-        req.authCheck = await Author.findOne({
+        req.authCheck = await User.findOne({
             where: {
-                authorName:req.body.authorName
+                username:req.body.username
             }
         })
 
         if (!req.authCheck) {return res.status(401).json({body:"Incorrect User Details"})}
 
-        const password = bcrypt.compare(req.body.authorPassword, req.user.authorPassword)
+        const password = bcrypt.compare(req.body.password, req.user.password)
         
         if (!password) {return res.status(401).json({body:"Incorrect User Details"})}
         
