@@ -1,55 +1,59 @@
-const bcrypt = require("bcrypt")
+const User = require("../users/model");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
+require("dotenv").config();
 
-const User = require("../services/models/user")
+const saltRounds = process.env.SALT_ROUNDS;
 
-const hashPass = async(req,res,next) => {
+const hashPass = async (req, res, next) => {
     try {
-        req.body.authorPassword = await bcrypt.hash(req.body.authorPassword, parseInt(process.env.SALT_ROUNDS))
+        req.body.password = await bcrypt.hash(req.body.password, parseInt(saltRounds))
         next()
-    } catch (err) {
-        res.status(500).json({body:err.Message})
+    } catch (error) {
+        res.status(501).json({errorMessage: "Error during password hashing.", error:error})
     }
 }
 
-const authenticatePassword = async(req,res,next) => {
+const checkPass = async (req, res, next) => {
     try {
-        req.authCheck = await User.findOne({
+        req.user = await User.findOne({
             where: {
-                username:req.body.username
+                username: req.body.username
             }
         })
-
-        if (!req.authCheck) {return res.status(401).json({body:"user not authorized"})}
-
-        const password = bcrypt.compare(req.body.password, req.user.password)
-        
-        if (!password) {return res.status(401).json({body:"user not authorized"})}
-        
+        console.log("Found user: ", req.user)
+        const comparePassword = await bcrypt.compare(req.body.password, req.user.password).then(console.log(res));
+        console.log("Compare password - ", comparePassword)
+        if(!comparePassword){
+            throw new Error("Password or username does not match!")
+        }
         next();
-    } catch (err) {
-        res.status(500).json({body:err.Message})
+    } catch (error) {
+        res.status(501).json({errorMessage: "Error whilst checking password.", error: error});
+        console.log(error);
     }
 }
 
-const authenticateToken = async(req,res,next) => {
+const checkToken = async (req, res, next) => {
     try {
-        if (!req.header("Authorisation")) {
-            return res.status(401).json({body:"user not authorized"})
+        if (!req.header("Authorization")) {
+            throw new Error("No header or token passed in the request")
         }
-        
-        const decodedToken = jwt.verify(req.header("Authorisation").replace("Bearer ", ""), process.env.SECRET)
-        const user = await User.findOne({where: {id:decodedToken.id}})
-        
-        if (!user) {
-            return res.status(401).json({body:"user not authorized"})
+        const token = req.header("Authorization").replace("Bearer ", "")
+        const decodedToken = jwt.verify(token, process.env.SECRET)
+        const user = await User.findOne({where: {id: decodedToken.id}})
+        if(!user){
+            throw new Error("User is not authorised")
         }
-
-        req["authCheck"] = user.dataValues
+        req.authUser = user
         next()
-    } catch (err) {
-        res.status(500).json({body:err.Message})
+        } catch (error) {
+            res.status(501).json({errorMessage: "Error whilst looking at token", error: error});
     }
-}
+};
 
-module.exports = {hashPass, authenticatePassword, authenticateToken}
+module.exports = {
+    hashPass,
+    checkPass,
+    checkToken
+}
