@@ -60,5 +60,6 @@ console.log("why wont you commit?")
 
 module.exports = {
     hashPass,
-    checkPass
+    checkPass,
+    tokenCheck
 }
