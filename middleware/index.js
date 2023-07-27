@@ -1,65 +1,59 @@
-const User = require("../users/model")
+const User = require("../users/model");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
+require("dotenv").config();
 
-const bcrypt = require("bcrypt")
-
-const saltRounds = process.env.SALT_ROUNDS
+const saltRounds = process.env.SALT_ROUNDS;
 
 const hashPass = async (req, res, next) => {
     try {
-        console.log("hashPass middleware")
         req.body.password = await bcrypt.hash(req.body.password, parseInt(saltRounds))
         next()
     } catch (error) {
-        res.status(501).json({errorMessage: error.message, error:error})
+        res.status(501).json({errorMessage: "Error during password hashing.", error:error})
     }
 }
 
 const checkPass = async (req, res, next) => {
-    try { 
-        const userPass = await User.findOne({
+    try {
+        req.user = await User.findOne({
             where: {
                 username: req.body.username
             }
         })
-        bcrypt.compare(req.body.password, userPass.password).then(console.log(res));
+        console.log("Found user: ", req.user)
+        const comparePassword = await bcrypt.compare(req.body.password, req.user.password).then(console.log(res));
+        console.log("Compare password - ", comparePassword)
+        if(!comparePassword){
+            throw new Error("Password or username does not match!")
+        }
         next();
     } catch (error) {
-        res.status(501).json({errorMessage: error.message, error: error});
+        res.status(501).json({errorMessage: "Error whilst checking password.", error: error});
         console.log(error);
     }
 }
 
-const tokenCheck = async function(req, res, next) {
-    request.post(
-      `https://${ process.env.SUBDOMAIN }.onelogin.com/oidc/2/token/introspection`,   
-      {
-      'form': {
-        'token': req.session.accessToken,
-        'token_type_hint': 'access_token',
-        'client_id': process.env.MY_SQL_URI,
-        'client_secret': process.env.SECRET
-      }
-    },function(err, response, body){
-      var token = JSON.parse(body);
-      var tokenValid = false;
-  
-      var clientIdValid = token.client_id === process.env.MY_SQL_URI;
-  
-      console.log(token.client_id)
-      console.log(process.env.MY_SQL_URI)
-
-      var currentTimestamp = new Date().getTime() / 1000;
-      var tokenIsNotExpired = token.exp > currentTimestamp;
-  
-      tokenValid = clientIdValid && tokenIsNotExpired
-    });
-  };
-
-console.log("why wont you commit?")
+const checkToken = async (req, res, next) => {
+    try {
+        if (!req.header("Authorization")) {
+            throw new Error("No header or token passed in the request")
+        }
+        const token = req.header("Authorization").replace("Bearer ", "")
+        const decodedToken = jwt.verify(token, process.env.SECRET)
+        const user = await User.findOne({where: {id: decodedToken.id}})
+        if(!user){
+            throw new Error("User is not authorised")
+        }
+        req.authUser = user
+        next()
+        } catch (error) {
+            res.status(501).json({errorMessage: "Error whilst looking at token", error: error});
+    }
+};
 
 module.exports = {
     hashPass,
     checkPass,
-    tokenCheck
+    checkToken
 }
