@@ -27,7 +27,7 @@ const UserRoutes = require("./routes/users")
 const ToDoRoutes = require("./routes/todos")
 
 //Configure Routes
-app.use("/user", UserRoutes)
+app.use("/users", UserRoutes)
 app.use("/todo", ToDoRoutes)
 
 //Configure the Port

@@ -8,10 +8,10 @@ const registerUser = async (req, res) => {
         //     email: req.body.email,
         //     password: req.body.password
         // })
-        const user = await User.create(req.body)
+        const  user= await User.create(req.body)
         res.status(201).json({
             message: `${req.body.username} succesfully added.`,
-            user:{username:newUser.username, email:newUser.email}
+            user:{username:user.username, email:user.email}
         })
     } catch (error) {
         res.status(501).json({errorMessage: "Error whilst registering.", error: error});
